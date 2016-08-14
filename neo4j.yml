@@ -1,0 +1,25 @@
+---
+- hosts: php
+  sudo: yes
+  vars:
+    download_url: https://neo4j.com/artifact.php?name=neo4j-community-3.0.4-unix.tar.gz
+    download_folder: /opt
+    neo4j_archive: neo4j-community-unix.tar.gz
+    neo4j_folder: "{{download_folder}}/neo4j-community-3.0.4"
+    download_dest: "{{download_folder}}/{{neo4j_archive}}"
+
+  tasks:
+   - name: Download neo4j
+     get_url: url={{download_url}} dest={{download_dest}}
+
+   - name: unpack archive
+     command: "tar -zxf {{download_dest}} -C {{download_folder}}"
+
+   - name: add user
+     user: name=neo4j password=neo4j state=present
+
+   - name: Fix ownership
+     file: state=directory path={{download_folder}} owner=neo4j group=neo4j recurse=yes
+
+  - name: change
+    lineinfile: dest='{{neo4j_folder}}/conf/neo4j.conf' state=present backrefs=yes regexp='^#dbms\.connector\.http\.address' line='dbms.connector.http.address=0.0.0.0:7474'
